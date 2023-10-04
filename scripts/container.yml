@@ -1,0 +1,68 @@
+---
+- hosts: local
+  tasks:
+    - name: Obtener lista de puertos abiertos
+      shell: netstat -nat | grep LISTEN
+      register: outputnet
+
+    - name: Imprimir lista de puertos abiertos
+      debug:
+        var: outputnet.stdout_lines
+
+    - name: Obtener lista de contenedores en ejecución
+      command: docker container ls
+      register: output
+
+    - name: Imprimir lista de contenedores en ejecución
+      debug:
+        var: output.stdout_lines
+
+    - name: Levantar contenedor de WSO2EI
+      community.general.docker_container:
+        name: wso2ei
+        image: wso2/wso2ei-integrator:latest
+        ports:
+          - "8280:8280"
+          - "9443:9443"
+      become: yes
+      when: container_action == "start"
+
+    - name: Levantar contenedor de Spring Boot
+      community.general.docker_container:
+        name: springboot
+        image: kimb88/hello-world-spring-boot
+        ports:
+          - "8080:8080"
+      become: yes
+      when: container_action == "start"
+
+    - name: Apagar contenedor de WSO2EI
+      community.general.docker_container:
+        name: wso2ei
+        state: stopped
+      become: yes
+      when: container_action == "stop"
+
+    - name: Apagar contenedor de Spring Boot
+      community.general.docker_container:
+        name: springboot
+        state: stopped
+      become: yes
+      when: container_action == "stop"
+
+    - name: Obtener lista de contenedores en ejecución
+      command: docker container ls
+      register: output
+
+    - name: Imprimir lista de contenedores en ejecución
+      debug:
+        var: output.stdout_lines
+
+    - name: Obtener lista de puertos abiertos
+      shell: netstat -nat | grep LISTEN
+      register: outputnet
+
+    - name: Imprimir lista de puertos abiertos
+      debug:
+        var: outputnet.stdout_lines
+
